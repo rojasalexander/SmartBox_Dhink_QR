@@ -4,24 +4,17 @@ import RPi.GPIO as GPIO
 import time
 import requests
 import json
-import socket
 from model import ResponseApi
-"""
-#Setup para el socket
-UDP_IP = "192.168.40.55"
-UDP_PORT = 5005
-
-sock = socket.socket(socket.AF_INET, #Internet
-                     socket.SOCK_DGRAM) #UDP
-sock.bind((UDP_IP, UDP_PORT))"""
 
 #setup para los pines
+sensorProxi = 17
 channel = 21
 channel2 = 20
 channel3 = 16
 channel4 = 26
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM) # GPIO Numbers instead of board numbers
+GPIO.setup(sensorProxi, GPIO.IN) # GPIO Assign mode
 GPIO.setup(channel, GPIO.OUT) # GPIO Assign mode
 GPIO.setup(channel2, GPIO.OUT) # GPIO Assign mode
 GPIO.setup(channel3, GPIO.OUT) # GPIO Assign mode
@@ -43,8 +36,7 @@ detector = cv2.QRCodeDetector()
 
 cerrar_camara = True
 
-
-
+future = 0
 #This creates an Infinite loop to keep your camera searching for data at all times
 def abrirCaja(pin, i):
     print("abrir la caja nro: ", i)
@@ -67,7 +59,22 @@ def checkQR(hash):
         return ResponseApi("Error de conexion", 500)
     
 while True:
+    time.sleep(0.5)
+    now = time.time()
+    print(GPIO.input(sensorProxi))
+    if(GPIO.input(sensorProxi) == 1):
+        print("activamos camara")
+        future = now + 5
+        print("future", future, "now", now)
+        detector = cv2.QRCodeDetector()
+        cap = cv2.VideoCapture(0)
+        cerrar_camara = False
+    
     while cerrar_camara == False:
+        now = time.time()
+        if(now > future):
+            print("pasaron 5 segundos")
+            cerrar_camara = True
         
         # Below is the method to get a image of the QR code
         _, img = cap.read()
@@ -121,37 +128,16 @@ while True:
         
         #At any point if you want to stop the Code all you need to do is press 'q' on your keyboard
         if(cv2.waitKey(1) == ord("q")):
+            cerrar_camara = True
             break
-
+        
     if(cerrar_camara == True):
         cap.release()
-        """
-        cv2.destroyAllWindows()
-        time.sleep(5)
-        cap = cv2.VideoCapture(0)
-        detector = cv2.QRCodeDetector()
-        cerrar_camara = False
-        """     
+  
     if(cv2.waitKey(1) == ord("c")):
         detector = cv2.QRCodeDetector()
         cap = cv2.VideoCapture(0)
-        cerrar_camara = False
-        
-    """#Codigo para recibir box del otro RPI para abrir
-    msg, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-    print("received message:", msg.decode())
-    try:
-        if(msg.decode() == "1"):
-            abrirCaja(channel, 1)
-        elif(msg.decode() == "2"):
-            abrirCaja(channel2, 2)
-        elif(msg.decode() == "3"):
-            abrirCaja(channel3, 3)
-        elif(msg.decode() == "4"):
-            abrirCaja(channel4, 4)
-    except:        
-        print("Error en la comunicacion de los RPI")
-    """        
+        cerrar_camara = False     
         
 # When the code is stopped the below closes all the applications/windows that the above has created
 GPIO.cleanup()
