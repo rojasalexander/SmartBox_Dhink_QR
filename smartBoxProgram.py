@@ -27,7 +27,7 @@ GPIO.output(channel4, GPIO.HIGH)
 
 
 #Url de api
-url = 'http://20.102.121.158:8002/cibi/api/orders-pickup/hash'
+url = 'http://20.185.1.3:8002/cibi/api/orders-pickup/hash'
 
 # set up camera object called Cap which we will use to find OpenCV
 cap = cv2.VideoCapture(0)
@@ -61,19 +61,19 @@ def checkQR(hash):
 while True:
     time.sleep(0.5)
     now = time.time()
-    print(GPIO.input(sensorProxi))
+    #print(GPIO.input(sensorProxi))
     if(GPIO.input(sensorProxi) == 1):
         print("activamos camara")
-        future = now + 5
-        print("future", future, "now", now)
+        future = now + 15
         detector = cv2.QRCodeDetector()
         cap = cv2.VideoCapture(0)
         cerrar_camara = False
     
     while cerrar_camara == False:
+        #Verificamos si 5 segundos pasaron desde que la camara se prendio
         now = time.time()
         if(now > future):
-            print("pasaron 5 segundos")
+            print("pasaron 15 segundos")
             cerrar_camara = True
         
         # Below is the method to get a image of the QR code
